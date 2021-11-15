@@ -16,6 +16,7 @@ import org.spongepowered.api.item.inventory.transaction.InventoryTransactionResu
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.text.serializer.TextSerializers;
+import world.pokeland.excessvault.ExcessVault;
 
 import java.util.Optional;
 
@@ -32,92 +33,92 @@ public class KeyCommand implements CommandExecutor {
 
         Key workingWith = null;
 
-        if(isVirtual && !src.hasPermission("huskycrates.key.virtual")){
-            src.sendMessage(Text.of(TextColors.RED,"You do not have permission to give out virtual keys."));
+        if (isVirtual && !src.hasPermission("huskycrates.key.virtual")) {
+            src.sendMessage(Text.of(TextColors.RED, "You do not have permission to give out virtual keys."));
             return CommandResult.success();
         }
 
-        if(crate.isPresent()){
-            if(crate.get().hasLocalKey()){
+        if (crate.isPresent()) {
+            if (crate.get().hasLocalKey()) {
                 workingWith = crate.get().getLocalKey();
             }
-        }else if(key.isPresent()){
+        } else if (key.isPresent()) {
             workingWith = key.get();
         }
-        if(workingWith == null){
+        if (workingWith == null) {
             src.sendMessage(HuskyCrates.keyCommandMessages.getCrateNoLocalKey());
             return CommandResult.success();
         }
 
-        if(workingWith.isVirtual() && !isVirtual){
+        if (workingWith.isVirtual() && !isVirtual) {
             src.sendMessage(HuskyCrates.keyCommandMessages.getCrateKeyVirtual());
             return CommandResult.success();
         }
         int amount = pamount.orElse(1);
-        String keyName = (crate.isPresent())?crate.get().getName():key.get().getName();
+        String keyName = (crate.isPresent()) ? crate.get().getName() : key.get().getName();
 
-        if(all.isPresent()){/** Deliver keys to all players **/
-            if(!src.hasPermission("huskycrates.key.all")){
-                src.sendMessage(Text.of(TextColors.RED,"You do not have permission to give everyone keys."));
+        if (all.isPresent()) {/** Deliver keys to all players **/
+            if (!src.hasPermission("huskycrates.key.all")) {
+                src.sendMessage(Text.of(TextColors.RED, "You do not have permission to give everyone keys."));
                 return CommandResult.success();
             }
             int deliveredTo = 0;
-            for(Player p : Sponge.getServer().getOnlinePlayers()){
+            for (Player p : Sponge.getServer().getOnlinePlayers()) {
                 InventoryTransactionResult result = null;
 
-                if(!isVirtual)
-                    result = Util.getHotbarFirst(p.getInventory()).offer(workingWith.getKeyItemStack(amount));
+                if (!isVirtual)
+                    result = ExcessVault.giveItem(p, workingWith.getKeyItemStack());
                 else
-                    HuskyCrates.registry.addVirtualKeys(p.getUniqueId(),workingWith.getId(),amount);
+                    HuskyCrates.registry.addVirtualKeys(p.getUniqueId(), workingWith.getId(), amount);
 
-                if(!isVirtual && result.getType() != InventoryTransactionResult.Type.SUCCESS){
-                    src.sendMessage(HuskyCrates.keyCommandMessages.getKeyDeliveryFail(p.getName(),amount));
-                }else{
-                    p.sendMessage(HuskyCrates.keyCommandMessages.getReceivedKey(keyName,amount));
+                if (!isVirtual && result.getType() != InventoryTransactionResult.Type.SUCCESS) {
+                    src.sendMessage(HuskyCrates.keyCommandMessages.getKeyDeliveryFail(p.getName(), amount));
+                } else {
+                    p.sendMessage(HuskyCrates.keyCommandMessages.getReceivedKey(keyName, amount));
                     deliveredTo++;
                 }
             }
-            src.sendMessage(HuskyCrates.keyCommandMessages.getMassKeyDeliverySuccess(deliveredTo,amount));
+            src.sendMessage(HuskyCrates.keyCommandMessages.getMassKeyDeliverySuccess(deliveredTo, amount));
 
-        }else if(player.isPresent()){ /** Deliver keys to a player **/
-            if(!src.hasPermission("huskycrates.key.others")){
-                src.sendMessage(Text.of(TextColors.RED,"You do not have permission to give others keys."));
+        } else if (player.isPresent()) { /** Deliver keys to a player **/
+            if (!src.hasPermission("huskycrates.key.others")) {
+                src.sendMessage(Text.of(TextColors.RED, "You do not have permission to give others keys."));
                 return CommandResult.success();
             }
             InventoryTransactionResult result = null;
 
-            if(!isVirtual)
-                result = Util.getHotbarFirst(player.get().getInventory()).offer(workingWith.getKeyItemStack(amount));
+            if (!isVirtual)
+                result = ExcessVault.giveItem(player.get(), workingWith.getKeyItemStack());
             else
-                HuskyCrates.registry.addVirtualKeys(player.get().getUniqueId(),workingWith.getId(),amount);
+                HuskyCrates.registry.addVirtualKeys(player.get().getUniqueId(), workingWith.getId(), amount);
 
-            if(!isVirtual && result.getType() != InventoryTransactionResult.Type.SUCCESS){
-                src.sendMessage(HuskyCrates.keyCommandMessages.getKeyDeliveryFail(player.get().getName(),amount));
-            }else{
-                player.get().sendMessage(HuskyCrates.keyCommandMessages.getReceivedKey(keyName,amount));
-                src.sendMessage(HuskyCrates.keyCommandMessages.getKeyDeliverySuccess(player.get().getName(),amount));
+            if (!isVirtual && result.getType() != InventoryTransactionResult.Type.SUCCESS) {
+                src.sendMessage(HuskyCrates.keyCommandMessages.getKeyDeliveryFail(player.get().getName(), amount));
+            } else {
+                player.get().sendMessage(HuskyCrates.keyCommandMessages.getReceivedKey(keyName, amount));
+                src.sendMessage(HuskyCrates.keyCommandMessages.getKeyDeliverySuccess(player.get().getName(), amount));
             }
 
-        }else if(src instanceof Player) { /** Deliver keys to self **/
-            if(!src.hasPermission("huskycrates.key.self")){
-                src.sendMessage(Text.of(TextColors.RED,"You do not have permission to give yourself keys."));
+        } else if (src instanceof Player) { /** Deliver keys to self **/
+            if (!src.hasPermission("huskycrates.key.self")) {
+                src.sendMessage(Text.of(TextColors.RED, "You do not have permission to give yourself keys."));
                 return CommandResult.success();
             }
             Player psrc = (Player) src;
             InventoryTransactionResult result = null;
 
-            if(!isVirtual)
-                result = Util.getHotbarFirst(psrc.getInventory()).offer(workingWith.getKeyItemStack(amount));
+            if (!isVirtual)
+                result = ExcessVault.giveItem(psrc, workingWith.getKeyItemStack());
             else
-                HuskyCrates.registry.addVirtualKeys(psrc.getUniqueId(),workingWith.getId(),amount);
+                HuskyCrates.registry.addVirtualKeys(psrc.getUniqueId(), workingWith.getId(), amount);
 
-            if(!isVirtual && result.getType() != InventoryTransactionResult.Type.SUCCESS){
+            if (!isVirtual && result.getType() != InventoryTransactionResult.Type.SUCCESS) {
                 src.sendMessage(HuskyCrates.keyCommandMessages.getSelfKeyDeliveryFail());
-            }else{
+            } else {
                 src.sendMessage(HuskyCrates.keyCommandMessages.getSelfKeyDeliverySuccess(amount));
             }
 
-        }else{ /** No valid subject... **/
+        } else { /** No valid subject... **/
             src.sendMessage(HuskyCrates.keyCommandMessages.getNoPlayersFound());
 
         }
@@ -134,7 +135,8 @@ public class KeyCommand implements CommandExecutor {
         private String selfKeyDeliveryFail;
         private String selfKeyDeliverySuccess;
         private String noPlayersFound;
-        public Messages(ConfigurationNode node){
+
+        public Messages(ConfigurationNode node) {
             this.crateNoLocalKey = node.getNode("crateNoLocalKey")
                     .getString("&cThe supplied crate did not have a local key.");
             this.crateKeyVirtual = node.getNode("crateKeyVirtual")
@@ -165,24 +167,24 @@ public class KeyCommand implements CommandExecutor {
 
         public Text getKeyDeliveryFail(String playerName, Integer amount) {
             return TextSerializers.FORMATTING_CODE.deserialize(keyDeliveryFail
-                    .replace("{player}",playerName)
-                    .replace("{amount}",amount.toString())
-                    .replace("{amount.plural}",(amount != 1)?"s":""));
+                    .replace("{player}", playerName)
+                    .replace("{amount}", amount.toString())
+                    .replace("{amount.plural}", (amount != 1) ? "s" : ""));
         }
 
         public Text getKeyDeliverySuccess(String playerName, Integer amount) {
             return TextSerializers.FORMATTING_CODE.deserialize(keyDeliverySuccess
-                    .replace("{player}",playerName)
-                    .replace("{amount}",amount.toString())
-                    .replace("{amount.plural}",(amount != 1)?"s":""));
+                    .replace("{player}", playerName)
+                    .replace("{amount}", amount.toString())
+                    .replace("{amount.plural}", (amount != 1) ? "s" : ""));
         }
 
         public Text getMassKeyDeliverySuccess(Integer playerAmount, Integer amount) {
             return TextSerializers.FORMATTING_CODE.deserialize(massKeyDeliverySuccess
-                    .replace("{playerAmount}",playerAmount.toString())
-                    .replace("{playerAmount.plural}",(playerAmount != 1)?"s":"")
-                    .replace("{amount}",amount.toString())
-                    .replace("{amount.plural}",(amount != 1)?"s":""));
+                    .replace("{playerAmount}", playerAmount.toString())
+                    .replace("{playerAmount.plural}", (playerAmount != 1) ? "s" : "")
+                    .replace("{amount}", amount.toString())
+                    .replace("{amount.plural}", (amount != 1) ? "s" : ""));
         }
 
         public Text getNoPlayersFound() {
@@ -191,9 +193,9 @@ public class KeyCommand implements CommandExecutor {
 
         public Text getReceivedKey(String keyName, Integer amount) {
             return TextSerializers.FORMATTING_CODE.deserialize(receivedKey
-                    .replace("{key}",keyName)
-                    .replace("{amount}",amount.toString())
-                    .replace("{amount.plural}",(amount != 1)?"s":""));
+                    .replace("{key}", keyName)
+                    .replace("{amount}", amount.toString())
+                    .replace("{amount.plural}", (amount != 1) ? "s" : ""));
         }
 
         public Text getSelfKeyDeliveryFail() {
@@ -202,8 +204,8 @@ public class KeyCommand implements CommandExecutor {
 
         public Text getSelfKeyDeliverySuccess(Integer amount) {
             return TextSerializers.FORMATTING_CODE.deserialize(selfKeyDeliverySuccess
-                    .replace("{amount}",amount.toString())
-                    .replace("{amount.plural}",(amount != 1)?"s":""));
+                    .replace("{amount}", amount.toString())
+                    .replace("{amount.plural}", (amount != 1) ? "s" : ""));
         }
     }
 }

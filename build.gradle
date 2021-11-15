@@ -1,0 +1,22 @@
+plugins {
+    id 'java'
+    id 'org.spongepowered.plugin' version '0.9.0'
+}
+
+// This may not be required, but has solved issues in the past
+compileJava.options.encoding = 'UTF-8'
+
+// TODO: Change the following to match your information
+group = 'com.codehusky'
+version = '2.0.0RC3'
+description = 'Here lies an example plugin definition'
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    compile 'org.spongepowered:spongeapi:7.2.0'
+    compileOnly fileTree(dir: '../libs', include: ['*.jar'])
+    compileOnly fileTree(dir: '../excess-vault/build/libs', include: ['*.jar'])
+}
